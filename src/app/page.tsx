@@ -9,15 +9,15 @@ export default async function Home() {
     <HydrateClient>
       <main className="min-h-screen bg-gradient-to-b from-[#69026d] to-[#15162c]">
         <div className="container mx-auto px-4 py-12">
-          <div className="max-w-6xl mx-auto">
+          <div className="mx-auto max-w-6xl">
             {/* Header */}
-            <div className="flex flex-col md:flex-row justify-between items-center space-y-8 md:space-y-0 mb-16">
+            <div className="mb-16 flex flex-col items-center justify-between space-y-8 md:flex-row md:space-y-0">
               {/* Logo/Brand */}
               <div className="text-center md:text-left">
-                <h1 className="text-4xl md:text-6xl font-extrabold text-white bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-300">
+                <h1 className="bg-gradient-to-r from-purple-400 to-pink-300 bg-clip-text text-4xl font-extrabold text-transparent text-white md:text-6xl">
                   Audiopintar
                 </h1>
-                <p className="mt-2 text-purple-200 text-lg">
+                <p className="mt-2 text-lg text-purple-200">
                   Transform your documents into audio, intelligently
                 </p>
               </div>
@@ -25,13 +25,13 @@ export default async function Home() {
               {/* Auth Section */}
               {session ? (
                 <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-3 bg-white/5 hover:bg-white/10 transition-colors rounded-full pr-2 pl-4 py-2">
+                  <div className="flex items-center gap-3 rounded-full bg-white/5 py-2 pl-4 pr-2 transition-colors hover:bg-white/10">
                     <span className="text-sm text-purple-200">
                       {session.user?.name}
                     </span>
                     <Link
                       href="/api/auth/signout"
-                      className="px-4 py-1.5 rounded-full bg-purple-600 hover:bg-purple-700 transition-all text-sm font-medium text-white"
+                      className="rounded-full bg-purple-600 px-4 py-1.5 text-sm font-medium text-white transition-all hover:bg-purple-700"
                     >
                       Sign out
                     </Link>
@@ -40,7 +40,7 @@ export default async function Home() {
               ) : (
                 <Link
                   href="/api/auth/signin"
-                  className="px-8 py-2.5 rounded-full bg-purple-600 hover:bg-purple-700 transition-all text-sm font-medium text-white"
+                  className="rounded-full bg-purple-600 px-8 py-2.5 text-sm font-medium text-white transition-all hover:bg-purple-700"
                 >
                   Sign in
                 </Link>
@@ -49,27 +49,32 @@ export default async function Home() {
 
             {/* Documents Section */}
             {session && (
-              <div className="mt-8 px-8 py-16 rounded-2xl bg-white/5 backdrop-blur-sm border border-purple-500/20">
+              <div className="mt-8 rounded-2xl border border-purple-500/20 bg-white/5 px-8 py-16 backdrop-blur-sm">
                 {/* Document list will be here */}
+                <img src={session?.user.image} alt={session?.user.name} />
+                <pre className="text-white">
+                  <code>{JSON.stringify(session?.user, null, 2)}</code>
+                </pre>
               </div>
             )}
 
             {/* Call to Action for Non-authenticated Users */}
             {!session && (
-              <div className="text-center mt-16">
-                <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">
+              <div className="mt-16 text-center">
+                <h2 className="mb-4 text-2xl font-bold text-white md:text-3xl">
                   Get Started Today
                 </h2>
-                <p className="text-purple-200 mb-8 max-w-2xl mx-auto">
-                  Sign in to start converting your PDF documents into high-quality audio files.
+                <p className="mx-auto mb-8 max-w-2xl text-purple-200">
+                  Sign in to start converting your PDF documents into
+                  high-quality audio files.
                 </p>
                 <Link
                   href="/api/auth/signin"
-                  className="inline-flex items-center px-8 py-3 rounded-full bg-purple-600 hover:bg-purple-700 transition-colors text-white font-medium group"
+                  className="group inline-flex items-center rounded-full bg-purple-600 px-8 py-3 font-medium text-white transition-colors hover:bg-purple-700"
                 >
                   Start Converting
                   <svg
-                    className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform"
+                    className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
