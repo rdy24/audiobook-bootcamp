@@ -51,7 +51,10 @@ export default async function Home() {
             {session && (
               <div className="mt-8 rounded-2xl border border-purple-500/20 bg-white/5 px-8 py-16 backdrop-blur-sm">
                 {/* Document list will be here */}
-                <img src={session?.user.image} alt={session?.user.name} />
+                <img
+                  src={session?.user.image ?? ""}
+                  alt={session?.user.name ?? "User"}
+                />
                 <pre className="text-white">
                   <code>{JSON.stringify(session?.user, null, 2)}</code>
                 </pre>
