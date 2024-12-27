@@ -27,6 +27,7 @@ export const env = createEnv({
     AWS_ENDPOINT_URL_IAM: z.string().url(),
     AWS_REGION: z.string(),
     AWS_S3_BUCKET: z.string(),
+    UPLOADTHING_TOKEN: z.string(),
   },
 
   /**
@@ -58,6 +59,7 @@ export const env = createEnv({
     AWS_ENDPOINT_URL_IAM: process.env.AWS_ENDPOINT_URL_IAM,
     AWS_REGION: process.env.AWS_REGION,
     AWS_S3_BUCKET: process.env.AWS_S3_BUCKET,
+    UPLOADTHING_TOKEN: process.env.UPLOADTHING_TOKEN,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially

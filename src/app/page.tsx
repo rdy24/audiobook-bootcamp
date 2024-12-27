@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { auth } from "~/server/auth";
 import { HydrateClient } from "~/trpc/server";
+import { Documents } from "./_components/Documents";
 
 export default async function Home() {
   const session = await auth();
@@ -49,15 +50,9 @@ export default async function Home() {
 
             {/* Documents Section */}
             {session && (
-              <div className="mt-8 rounded-2xl border border-purple-500/20 bg-white/5 px-8 py-16 backdrop-blur-sm">
+              <div className="mt-8 px-8 py-16 rounded-2xl bg-white/5 backdrop-blur-sm border border-purple-500/20">
                 {/* Document list will be here */}
-                <img
-                  src={session?.user.image ?? ""}
-                  alt={session?.user.name ?? "User"}
-                />
-                <pre className="text-white">
-                  <code>{JSON.stringify(session?.user, null, 2)}</code>
-                </pre>
+                  <Documents />
               </div>
             )}
 
