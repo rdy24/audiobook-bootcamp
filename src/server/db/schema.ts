@@ -93,3 +93,46 @@ export const verificationTokens = createTable(
     compoundKey: primaryKey({ columns: [vt.identifier, vt.token] }),
   })
 );
+
+
+export const documents = createTable(
+  "document",
+  {
+    id: int("id", { mode: "number" }).primaryKey({ autoIncrement: true }),
+    name: text("name", { length: 256 }).notNull(),
+    createdById: text("created_by", { length: 255 }).notNull().references(() => users.id),
+    createdAt: int("created_at", { mode: "timestamp" }).default(sql`(unixepoch())`).notNull(),
+    updatedAt: int("updatedAt", { mode: "timestamp" }).$onUpdate(() => new Date()),
+  },
+  (table) => ({
+    createdByIdIdx: index("doc_created_by_idx").on(table.createdById),
+    nameIndex: index("doc_name_idx").on(table.name),
+  })
+);
+
+export const pages = createTable(
+  "page",
+  {
+    id: int("id", { mode: "number" }).primaryKey({ autoIncrement: true }),
+    documentId: int("document_id").notNull().references(() => documents.id),
+    pageNumber: int("page_number").notNull(),
+    content: text("content").notNull(),
+    createdAt: int("created_at", { mode: "timestamp" })
+      .default(sql`(unixepoch())`)
+      .notNull(),
+  },
+  (table) => ({
+    documentIdIdx: index("page_document_id_idx").on(table.documentId),
+    pageNumberIdx: index("page_number_idx").on(table.pageNumber),
+  })
+);
+
+export const documentsRelations = relations(documents, ({ many, one }) => ({
+  pages: many(pages),
+  creator: one(users, { fields: [documents.createdById], references: [users.id] }),
+}));
+
+export const pagesRelations = relations(pages, ({ one, many }) => ({
+  document: one(documents, { fields: [pages.documentId], references: [documents.id] }),
+}));
+
