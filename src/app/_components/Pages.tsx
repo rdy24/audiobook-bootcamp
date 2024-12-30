@@ -16,6 +16,7 @@ interface PagesProps {
             id: number;
         }[]
     }[];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     refetchDocuments: () => Promise<any>;
 }
 
