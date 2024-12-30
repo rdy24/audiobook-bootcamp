@@ -134,5 +134,26 @@ export const documentsRelations = relations(documents, ({ many, one }) => ({
 
 export const pagesRelations = relations(pages, ({ one, many }) => ({
   document: one(documents, { fields: [pages.documentId], references: [documents.id] }),
+  audioFiles: many(audioFiles)
 }));
 
+
+export const audioFiles = createTable(
+  "audio_file",
+  {
+    id: int("id", { mode: "number" }).primaryKey({ autoIncrement: true }),
+    pageId: int("page_id").notNull().references(() => pages.id),
+    fileName: text("file_name", { length: 256 }).notNull(),
+    filePath: text("file_path").notNull(),
+    createdAt: int("created_at", { mode: "timestamp" })
+      .default(sql`(unixepoch())`)
+      .notNull(),
+  },
+  (table) => ({
+    pageIdIdx: index("audio_page_id_idx").on(table.pageId),
+  })
+);
+
+export const audioFilesRelations = relations(audioFiles, ({ one }) => ({
+  page: one(pages, { fields: [audioFiles.pageId], references: [pages.id] }),
+}));

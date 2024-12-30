@@ -2,6 +2,7 @@
 
 import { UploadButton } from "~/utils/uploadthing";
 import { api } from "~/trpc/react";
+import { Pages } from "./Pages";
 
 export function Documents() {
     const { data: documents, refetch: refetchDocuments } = api.document.getAll.useQuery();
@@ -42,14 +43,23 @@ export function Documents() {
                     <div className="text-white p-4 border rounded-xl bg-white/5" key={document.id}>
                         <p>{document.name}</p>
                         <p>Pages</p>
-                        {document.pages.map((page) => (
+                        {/* {document.pages.map((page) => (
                             <div key={page.id}>
                                 <p>Page {page.pageNumber}</p>
                                 <p>{page.content}</p>
                             </div>
-                        ))}
+                        ))} */}
+                        <Pages
+                            documentId={document.id}
+                            pages={document.pages}
+                            refetchDocuments={refetchDocuments}
+                            voice={"pNInz6obpgDQGcFmaJgB"}
+                        />
                     </div>
+                    
                 ))}
+
+                
             </div>
         </div>
     );

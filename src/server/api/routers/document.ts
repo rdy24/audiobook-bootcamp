@@ -2,8 +2,24 @@ import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { z } from "zod";
 import { env } from "~/env";
 import { LlamaParseReader } from '@llamaindex/cloud/reader';
-import { documents, pages } from "~/server/db/schema";
-import { eq } from "drizzle-orm";
+import { documents, pages, audioFiles  } from "~/server/db/schema";
+import { ElevenLabsClient } from "elevenlabs";
+import { S3Client } from "@aws-sdk/client-s3";
+import { Upload } from "@aws-sdk/lib-storage";
+import { eq, inArray } from "drizzle-orm";
+
+const elevenlabs = new ElevenLabsClient({
+  apiKey: env.ELEVENLABS_API_KEY,
+});
+
+const s3Client = new S3Client({
+  region: "auto",
+  endpoint: "https://fly.storage.tigris.dev",
+  credentials: {
+    accessKeyId: env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: env.AWS_SECRET_ACCESS_KEY,
+  },
+});
 
 async function getPdfContent(buffer: Buffer): Promise<{ pages: { number: number; content: string }[] }> {
   try {
@@ -25,12 +41,58 @@ async function getPdfContent(buffer: Buffer): Promise<{ pages: { number: number;
   }
 }
 
+async function generateAudio(text: string, voice: string): Promise<Buffer> {
+  try {
+    const audio = await elevenlabs.generate({
+      voice,
+      text,
+      model_id: 'eleven_multilingual_v2',
+    });
+
+    // Convert the stream to a buffer
+    const chunks: (Buffer & ArrayBufferLike)[] = [];
+    for await (const chunk of audio) {
+      chunks.push(Buffer.from(chunk) as Buffer & ArrayBufferLike);
+    }
+    const audioBuffer = Buffer.concat(chunks) as Buffer & ArrayBufferLike;
+
+    return audioBuffer;
+  } catch (error) {
+    console.error("Error generating audio:", error);
+    throw new Error("Failed to generate audio: " + (error as Error).message);
+  }
+}
+
+async function saveAudioFile(audioBuffer: Buffer, fileName: string): Promise<string> {
+  try {
+    const upload = new Upload({
+      client: s3Client,
+      params: {
+        Bucket: env.AWS_S3_BUCKET,
+        Key: `audio/${fileName}`,
+        Body: audioBuffer,
+        ContentType: 'audio/mpeg',
+      },
+    });
+
+    await upload.done();
+    return `https://fly.storage.tigris.dev/${env.AWS_S3_BUCKET}/audio/${fileName}`;
+  } catch (error) {
+    console.error("Error uploading to S3:", error);
+    throw new Error(`Failed to upload audio file: ${(error as Error).message}`);
+  }
+}
+
 export const documentRouter = createTRPCRouter({
   getAll: protectedProcedure.query(async ({ ctx }) => {
     return await ctx.db.query.documents.findMany({
       where: eq(documents.createdById, ctx.session.user.id),
       with: {
-        pages: true
+        pages: {
+          with: {
+            audioFiles: true
+          }
+        }
       },
       orderBy: (documents, { desc }) => [desc(documents.createdAt)],
     });
@@ -95,5 +157,49 @@ export const documentRouter = createTRPCRouter({
         console.error("Error creating document:", error);
         throw new Error("Failed to create document: " + (error as Error).message);
       }
+    }),
+  
+  generateAudioBook: protectedProcedure
+    .input(z.object({
+      documentId: z.number(),
+      pageIds: z.array(z.number()),
+      voice: z.string(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      if (!env.ELEVENLABS_API_KEY) {
+        throw new Error("ElevenLabs API key is not configured");
+      }
+
+      // Get the specified pages
+      const pagesToRegenerate = await ctx.db.query.pages.findMany({
+        where: inArray(pages.id, input.pageIds)
+      });
+
+      // Process each page
+      const results = await Promise.all(pagesToRegenerate.map(async (page) => {
+        try {
+          // Convert text to speech using ElevenLabs
+          const audioBuffer = await generateAudio(page.content, input.voice);
+
+          // Save the audio file
+          const fileName = `${page.documentId}-${page.pageNumber}-${Date.now()}.mp3`;
+          const audioPath = await saveAudioFile(audioBuffer, fileName);
+
+          // Update the audio file record
+          await ctx.db.delete(audioFiles).where(eq(audioFiles.pageId, page.id));
+          const [audioFile] = await ctx.db.insert(audioFiles).values({
+            pageId: page.id,
+            fileName: fileName,
+            filePath: audioPath,
+          }).returning();
+
+          return { pageId: page.id, success: true, audioFile };
+        } catch (error) {
+          console.error(`Error regenerating audio for page ${page.id}:`, error);
+          return { pageId: page.id, success: false, error: (error as Error).message };
+        }
+      }));
+
+      return results;
     }),
 });
