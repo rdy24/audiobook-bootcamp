@@ -145,42 +145,68 @@ export const documentRouter = createTRPCRouter({
       return deletedDoc;
     }),
   generateAudioBook: protectedProcedure
-    .input(z.object({
-      documentId: z.number(),
-      pageIds: z.array(z.number()),
-      voice: z.string(),
-    }))
+    .input(
+      z.object({
+        documentId: z.number(),
+        pageIds: z.array(z.number()),
+        voice: z.string(),
+      })
+    )
     .mutation(async ({ ctx, input }) => {
       if (!env.ELEVENLABS_API_KEY) {
         throw new Error("ElevenLabs API key is not configured");
       }
 
-      // Get the specified pages
+      // Fetch the specified pages
       const pagesToRegenerate = await ctx.db.query.pages.findMany({
-        where: inArray(pages.id, input.pageIds)
+        where: inArray(pages.id, input.pageIds),
+        with: {
+          audioFiles: true, // Include existing audio files for cleanup
+        },
       });
 
-      // Process each page
-      const results = await Promise.all(pagesToRegenerate.map(async (page) => {
-        try {
-          const handle = await generateAudioTask.trigger({ 
-            documentId: input.documentId,
-            pageId: page.id,
-            voice: input.voice,
-            content: page.content
-          });
-          const runId = handle.id;
-          const run = await runs.retrieve<typeof generateAudioTask>(runId);
-
-          return { pageId: page.id, success: true, runId };
-        } catch (error) {
-          console.error(`Error regenerating audio for page ${page.id}:`, error);
-          return { pageId: page.id, success: false, error: (error as Error).message };
+      // Delete existing audio files for the pages being regenerated
+      for (const page of pagesToRegenerate) {
+        if (page.audioFiles.length > 0) {
+          try {
+            for (const audio of page.audioFiles) {
+              await ctx.db.delete(audioFiles).where(eq(audioFiles.id, audio.id));
+              console.log(`Deleted audio file: ${audio.id} for page ${page.id}`);
+            }
+          } catch (error) {
+            console.error(
+              `Error deleting existing audio for page ${page.id}:`,
+              error
+            );
+          }
         }
-      }));
+      }
+
+      // Regenerate audio for the pages
+      const results = await Promise.all(
+        pagesToRegenerate.map(async (page) => {
+          try {
+            const handle = await generateAudioTask.trigger({
+              documentId: input.documentId,
+              pageId: page.id,
+              voice: input.voice,
+              content: page.content,
+            });
+
+            const runId = handle.id;
+            const run = await runs.retrieve<typeof generateAudioTask>(runId);
+
+            return { pageId: page.id, success: true, runId };
+          } catch (error) {
+            console.error(`Error regenerating audio for page ${page.id}:`, error);
+            return { pageId: page.id, success: false, error: (error as Error).message };
+          }
+        })
+      );
 
       return results;
     }),
+
   getJobStatus: protectedProcedure
     .input(z.object({
       runId: z.string(),
@@ -189,4 +215,7 @@ export const documentRouter = createTRPCRouter({
       const run = await runs.retrieve<typeof generateAudioTask>(input.runId);
       return run;
     }),
+  getListVoices: protectedProcedure.query(async ({ ctx }) => {
+    return await elevenlabs.voices.getAll();
+  }),
 });

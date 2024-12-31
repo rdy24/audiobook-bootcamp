@@ -25,7 +25,6 @@ interface PagesProps {
 
 export function Pages({ documentId, voice, pages, refetchDocuments, documentName }: PagesProps) {
     const [pageIdActive, setPageIdActive] = useState<null | number>(null);
-
     const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(null);
 
     useEffect(() => {
@@ -65,7 +64,7 @@ export function Pages({ documentId, voice, pages, refetchDocuments, documentName
                 // Wait for a brief moment to ensure the audio file is available
                 await new Promise(resolve => setTimeout(resolve, 1000));
                 await refetchDocuments();
-                
+
                 if (pollingInterval) {
                     clearInterval(pollingInterval);
                     setPollingInterval(null);
@@ -84,6 +83,11 @@ export function Pages({ documentId, voice, pages, refetchDocuments, documentName
     });
 
     function handleGenerateAudio(pageId: number) {
+        if (!voice || voice.trim() === "") {
+            alert("Please select a voice before generating audio.");
+            return;
+        }
+
         try {
             setPageIdActive(pageId);
             generateAudio.mutate({ documentId, pageIds: [pageId], voice });
@@ -93,10 +97,15 @@ export function Pages({ documentId, voice, pages, refetchDocuments, documentName
     }
 
     const handleDownloadAll = async (pages: Page[]) => {
-        const audioFiles = pages.flatMap(page => 
+        const audioFiles = pages.flatMap(page =>
             page.audioFiles.filter(audio => audio.filePath.length > 0)
         );
-        
+
+        if (audioFiles.length === 0) {
+            alert("No audio files are available to download. Please generate audio first.");
+            return;
+        }
+
         try {
             // Create audio context
             const AudioContext = window.AudioContext;
@@ -135,7 +144,7 @@ export function Pages({ documentId, voice, pages, refetchDocuments, documentName
 
             // Convert to wav blob
             const wavBlob = await audioBufferToWav(finalBuffer);
-            
+
             // Create download link
             const url = URL.createObjectURL(wavBlob);
             const link = document.createElement('a');
@@ -168,7 +177,17 @@ export function Pages({ documentId, voice, pages, refetchDocuments, documentName
             {pages.map((page) => (
                 <div key={page.id} className="p-4 bg-white/5 rounded-lg mb-2">
                     <div className="flex gap-2 items-center">
-                        <p className="mb-2">Page {page.pageNumber}</p>
+                        <div>
+                            <p className="mb-2">Page {page.pageNumber}</p>
+                            <button
+                                className="p-2 rounded-md bg-white/10 hover:bg-white/20 text-xs flex items-center"
+                                onClick={() => handleGenerateAudio(page.id)}>
+                                {pageIdActive === page.id && (
+                                    <span className="block size-4 border-2 border-dashed rounded-full animate-spin mr-2"></span>
+                                )}
+                                Generate audio
+                            </button>
+                        </div>
                         {page.audioFiles.map((audioFile) => (
                             <div key={audioFile.id} className="mt-4 flex-1">
                                 <audio
@@ -181,14 +200,6 @@ export function Pages({ documentId, voice, pages, refetchDocuments, documentName
                             </div>
                         ))}
                     </div>
-                    <button
-                        className="p-2 rounded-md bg-white/10 hover:bg-white/20 text-xs flex items-center"
-                        onClick={() => handleGenerateAudio(page.id)}>
-                        {pageIdActive === page.id && (
-                            <span className="block size-4 border-2 border-dashed rounded-full animate-spin mr-2"></span>
-                        )}
-                        Generate audio
-                    </button>
                 </div>
             ))}
         </div>

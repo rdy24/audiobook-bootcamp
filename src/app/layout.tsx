@@ -7,7 +7,7 @@ import { type Metadata } from "next";
 import { TRPCReactProvider } from "~/trpc/react";
 
 export const metadata: Metadata = {
-  title: "Audiopintar",
+  title: "Simple Audio Book",
   description: "Convert your PDF documents into high-quality audio files",
   icons: [{ rel: "icon", url: "/favicon.ico" }],
 };

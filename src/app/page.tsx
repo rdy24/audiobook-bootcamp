@@ -8,18 +8,18 @@ export default async function Home() {
 
   return (
     <HydrateClient>
-      <main className="min-h-screen bg-gradient-to-b from-[#69026d] to-[#15162c]">
+      <main className="min-h-screen bg-gradient-to-b from-[#02126d] to-[#15162c]">
         <div className="container mx-auto px-4 py-12">
           <div className="mx-auto max-w-6xl">
             {/* Header */}
             <div className="mb-16 flex flex-col items-center justify-between space-y-8 md:flex-row md:space-y-0">
               {/* Logo/Brand */}
               <div className="text-center md:text-left">
-                <h1 className="bg-gradient-to-r from-purple-400 to-pink-300 bg-clip-text text-4xl font-extrabold text-transparent text-white md:text-6xl">
-                  Audiopintar
+                <h1 className="bg-gradient-to-r from-blue-400 to-yellow-300 bg-clip-text text-4xl font-extrabold text-transparent text-white md:text-6xl">
+                  Simple Audio Book
                 </h1>
-                <p className="mt-2 text-lg text-purple-200">
-                  Transform your documents into audio, intelligently
+                <p className="mt-2 text-lg text-blue-200">
+                  Convert your PDF documents into high-quality audio files
                 </p>
               </div>
 
@@ -27,12 +27,12 @@ export default async function Home() {
               {session ? (
                 <div className="flex items-center gap-4">
                   <div className="flex items-center gap-3 rounded-full bg-white/5 py-2 pl-4 pr-2 transition-colors hover:bg-white/10">
-                    <span className="text-sm text-purple-200">
+                    <span className="text-sm text-blue-200">
                       {session.user?.name}
                     </span>
                     <Link
                       href="/api/auth/signout"
-                      className="rounded-full bg-purple-600 px-4 py-1.5 text-sm font-medium text-white transition-all hover:bg-purple-700"
+                      className="rounded-full bg-blue-600 px-4 py-1.5 text-sm font-medium text-white transition-all hover:bg-blue-700"
                     >
                       Sign out
                     </Link>
@@ -41,7 +41,7 @@ export default async function Home() {
               ) : (
                 <Link
                   href="/api/auth/signin"
-                  className="rounded-full bg-purple-600 px-8 py-2.5 text-sm font-medium text-white transition-all hover:bg-purple-700"
+                  className="rounded-full bg-blue-600 px-8 py-2.5 text-sm font-medium text-white transition-all hover:bg-blue-700"
                 >
                   Sign in
                 </Link>
@@ -50,7 +50,7 @@ export default async function Home() {
 
             {/* Documents Section */}
             {session && (
-              <div className="mt-8 px-8 py-16 rounded-2xl bg-white/5 backdrop-blur-sm border border-purple-500/20">
+              <div className="mt-8 px-8 py-16 rounded-2xl bg-white/5 backdrop-blur-sm border border-blue-500/20">
                 {/* Document list will be here */}
                   <Documents />
               </div>
@@ -62,13 +62,13 @@ export default async function Home() {
                 <h2 className="mb-4 text-2xl font-bold text-white md:text-3xl">
                   Get Started Today
                 </h2>
-                <p className="mx-auto mb-8 max-w-2xl text-purple-200">
+                <p className="mx-auto mb-8 max-w-2xl text-blue-200">
                   Sign in to start converting your PDF documents into
                   high-quality audio files.
                 </p>
                 <Link
                   href="/api/auth/signin"
-                  className="group inline-flex items-center rounded-full bg-purple-600 px-8 py-3 font-medium text-white transition-colors hover:bg-purple-700"
+                  className="group inline-flex items-center rounded-full bg-blue-600 px-8 py-3 font-medium text-white transition-colors hover:bg-blue-700"
                 >
                   Start Converting
                   <svg
