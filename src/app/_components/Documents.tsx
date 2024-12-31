@@ -78,9 +78,10 @@ export function Documents() {
                         </div>
                         <Pages
                             documentId={document.id}
+                            documentName={document.name}
                             pages={document.pages}
                             refetchDocuments={refetchDocuments}
-                            voice={"pNInz6obpgDQGcFmaJgB"}
+                            voice={"e1QlSdXpS6HwesZvYHND"}
                         />
                     </div>
                     

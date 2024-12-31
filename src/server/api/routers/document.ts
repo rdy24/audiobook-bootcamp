@@ -5,8 +5,9 @@ import { LlamaParseReader } from '@llamaindex/cloud/reader';
 import { documents, pages, audioFiles  } from "~/server/db/schema";
 import { ElevenLabsClient } from "elevenlabs";
 import { S3Client } from "@aws-sdk/client-s3";
-import { Upload } from "@aws-sdk/lib-storage";
 import { eq, inArray } from "drizzle-orm";
+import { generateAudioTask } from "~/trigger/generate";
+import { runs } from "@trigger.dev/sdk/v3";
 
 const elevenlabs = new ElevenLabsClient({
   apiKey: env.ELEVENLABS_API_KEY,
@@ -38,48 +39,6 @@ async function getPdfContent(buffer: Buffer): Promise<{ pages: { number: number;
   } catch (error) {
     console.error("Error processing PDF:", error);
     throw new Error("Failed to process PDF document: " + (error as Error).message);
-  }
-}
-
-async function generateAudio(text: string, voice: string): Promise<Buffer> {
-  try {
-    const audio = await elevenlabs.generate({
-      voice,
-      text,
-      model_id: 'eleven_multilingual_v2',
-    });
-
-    // Convert the stream to a buffer
-    const chunks: (Buffer & ArrayBufferLike)[] = [];
-    for await (const chunk of audio) {
-      chunks.push(Buffer.from(chunk) as Buffer & ArrayBufferLike);
-    }
-    const audioBuffer = Buffer.concat(chunks) as Buffer & ArrayBufferLike;
-
-    return audioBuffer;
-  } catch (error) {
-    console.error("Error generating audio:", error);
-    throw new Error("Failed to generate audio: " + (error as Error).message);
-  }
-}
-
-async function saveAudioFile(audioBuffer: Buffer, fileName: string): Promise<string> {
-  try {
-    const upload = new Upload({
-      client: s3Client,
-      params: {
-        Bucket: env.AWS_S3_BUCKET,
-        Key: `audio/${fileName}`,
-        Body: audioBuffer,
-        ContentType: 'audio/mpeg',
-      },
-    });
-
-    await upload.done();
-    return `https://fly.storage.tigris.dev/${env.AWS_S3_BUCKET}/audio/${fileName}`;
-  } catch (error) {
-    console.error("Error uploading to S3:", error);
-    throw new Error(`Failed to upload audio file: ${(error as Error).message}`);
   }
 }
 
@@ -204,22 +163,16 @@ export const documentRouter = createTRPCRouter({
       // Process each page
       const results = await Promise.all(pagesToRegenerate.map(async (page) => {
         try {
-          // Convert text to speech using ElevenLabs
-          const audioBuffer = await generateAudio(page.content, input.voice);
-
-          // Save the audio file
-          const fileName = `${page.documentId}-${page.pageNumber}-${Date.now()}.mp3`;
-          const audioPath = await saveAudioFile(audioBuffer, fileName);
-
-          // Update the audio file record
-          await ctx.db.delete(audioFiles).where(eq(audioFiles.pageId, page.id));
-          const [audioFile] = await ctx.db.insert(audioFiles).values({
+          const handle = await generateAudioTask.trigger({ 
+            documentId: input.documentId,
             pageId: page.id,
-            fileName: fileName,
-            filePath: audioPath,
-          }).returning();
+            voice: input.voice,
+            content: page.content
+          });
+          const runId = handle.id;
+          const run = await runs.retrieve<typeof generateAudioTask>(runId);
 
-          return { pageId: page.id, success: true, audioFile };
+          return { pageId: page.id, success: true, runId };
         } catch (error) {
           console.error(`Error regenerating audio for page ${page.id}:`, error);
           return { pageId: page.id, success: false, error: (error as Error).message };
@@ -227,5 +180,13 @@ export const documentRouter = createTRPCRouter({
       }));
 
       return results;
+    }),
+  getJobStatus: protectedProcedure
+    .input(z.object({
+      runId: z.string(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const run = await runs.retrieve<typeof generateAudioTask>(input.runId);
+      return run;
     }),
 });
