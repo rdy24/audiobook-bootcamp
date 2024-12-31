@@ -20,7 +20,7 @@ interface PagesProps {
     documentName: string;
     voice: string;
     pages: Page[];
-    // disable @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     refetchDocuments: () => Promise<any>;
 }
 

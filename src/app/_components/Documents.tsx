@@ -9,8 +9,7 @@ export function Documents() {
     const { data: documents, refetch: refetchDocuments } = api.document.getAll.useQuery();
     const { data: voices, isLoading: voicesLoading, error: voicesError } = api.document.getListVoices.useQuery();
 
-    // disable @typescript-eslint/consistent-indexed-object-style
-    const [selectedVoices, setSelectedVoices] = useState<{ [key: number]: string }>({});
+    const [selectedVoices, setSelectedVoices] = useState<Record<number, string>>({});
 
     const createDocument = api.document.create.useMutation({
         onSuccess: async () => {
@@ -72,8 +71,8 @@ export function Documents() {
                         <select
                             className="select select-bordered w-full bg-white/5 text-white"
                             name={`voice_id_${document.id}`}
-                            id={`voice_id_${document.id || ""}`}
-                            value={selectedVoices[document.id] || ""}
+                            id={`voice_id_${document.id ?? ""}`}
+                            value={selectedVoices[document.id] ?? ""}
                             onChange={(e) => handleVoiceChange(document.id, e.target.value)}
                         >
                             <option value="" disabled className="text-black">
@@ -111,9 +110,9 @@ export function Documents() {
                         <Pages
                             documentId={document.id}
                             documentName={document.name}
-                            pages={document.pages || []}
+                            pages={document.pages ?? []}
                             refetchDocuments={refetchDocuments}
-                            voice={selectedVoices[document.id] || ""} // Use selected voice
+                            voice={selectedVoices[document.id] ?? ""} // Use selected voice
                         />
                     </div>
                 ))}
