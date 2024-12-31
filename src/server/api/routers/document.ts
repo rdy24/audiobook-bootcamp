@@ -158,7 +158,33 @@ export const documentRouter = createTRPCRouter({
         throw new Error("Failed to create document: " + (error as Error).message);
       }
     }),
-  
+  delete: protectedProcedure
+    .input(z.object({
+      id: z.number(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+
+      const document = await ctx.db.query.documents.findFirst({
+        where: (documents, { and,eq }) => and(
+          eq(documents.id, input.id),
+          eq(documents.createdById, ctx.session.user.id)
+        )
+      });
+
+      if (!document) {
+        throw new Error("Document not found");
+      }
+
+      await ctx.db.delete(pages).where(eq(pages.documentId, input.id));
+
+      const [deletedDoc] = await ctx.db.delete(documents).where(eq(documents.id, input.id)).returning();
+
+      if (!deletedDoc) {
+        throw new Error("Failed to delete document");
+      }
+
+      return deletedDoc;
+    }),
   generateAudioBook: protectedProcedure
     .input(z.object({
       documentId: z.number(),

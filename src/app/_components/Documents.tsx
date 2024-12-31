@@ -15,6 +15,17 @@ export function Documents() {
             console.error("Error creating document:", error);
         }
     });
+
+    const deleteDocument = api.document.delete.useMutation({
+        onSuccess: async () => {
+            console.log("Document deleted successfully");
+            await refetchDocuments();
+        },
+        onError: (error) => {
+            console.error("Error deleting document:", error);
+        }
+    });
+
     return (
         <div>
             <UploadButton
@@ -40,15 +51,31 @@ export function Documents() {
             />
             <div className="mt-8">
                 {documents?.map((document) => (
-                    <div className="text-white p-4 border rounded-xl bg-white/5" key={document.id}>
-                        <p>{document.name}</p>
-                        <p>Pages</p>
-                        {/* {document.pages.map((page) => (
-                            <div key={page.id}>
-                                <p>Page {page.pageNumber}</p>
-                                <p>{page.content}</p>
+                    <div className="text-white p-4 border rounded-xl bg-white/5 my-2" key={document.id}>
+                        <div className="flex justify-between items-center">
+                            <div>
+                                <p>{document.name}</p>
+                                <p>Pages</p>
                             </div>
-                        ))} */}
+                            {/* {document.pages.map((page) => (
+                                <div key={page.id}>
+                                    <p>Page {page.pageNumber}</p>
+                                    <p>{page.content}</p>
+                                </div>
+                            ))} */}
+                            {/* add button delete */}
+                            <div className="flex justify-between items-center">
+                                <button
+                                    className="bg-red-500 text-white px-2 py-1 hover:bg-red-600 rounded"
+                                    onClick={() => {
+                                        deleteDocument.mutate({ id: document.id });
+                                    }}
+                                    disabled={deleteDocument.isPending}
+                                >
+                                    {deleteDocument.isPending ? "Deleting..." : "Delete"}
+                                </button>
+                            </div>
+                        </div>
                         <Pages
                             documentId={document.id}
                             pages={document.pages}
