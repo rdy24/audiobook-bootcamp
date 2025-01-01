@@ -170,8 +170,6 @@ export function Pages({ documentId, voice, pages, refetchDocuments, documentName
         }
     };
 
-    console.log("Pages:", pages);
-
     return (
         <div className="mt-8 grid gap-2">
             <button onClick={() => handleDownloadAll(pages)} className="p-2 bg-white/5 hover:bg-white/10 rounded-md">
