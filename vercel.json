@@ -1,0 +1,16 @@
+{
+  "version": 2,
+  "buildCommand": "npx trigger.dev@latest deploy",
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/"
+    }
+  ]
+}
