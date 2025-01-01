@@ -17,11 +17,8 @@ jobs:
         with:
           node-version: "20.x"
 
-      - name: Install dependencies
-        run: npm install
-
       - name: 🚀 Deploy Trigger.dev
         env:
           TRIGGER_ACCESS_TOKEN: ${{ secrets.TRIGGER_ACCESS_TOKEN }}
         run: |
-          npx trigger.dev@latest deploy
+          npx trigger.dev@latest dev
