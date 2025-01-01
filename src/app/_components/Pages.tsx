@@ -170,6 +170,8 @@ export function Pages({ documentId, voice, pages, refetchDocuments, documentName
         }
     };
 
+    console.log("Pages:", pages);
+
     return (
         <div className="mt-8 grid gap-2">
             <button onClick={() => handleDownloadAll(pages)} className="p-2 bg-white/5 hover:bg-white/10 rounded-md">
@@ -177,18 +179,23 @@ export function Pages({ documentId, voice, pages, refetchDocuments, documentName
             </button>
             {pages.map((page) => (
                 <div key={page.id} className="p-4 bg-white/5 rounded-lg mb-2">
-                    <div className="flex gap-2 items-center">
-                        <div>
-                            <p className="mb-2">Page {page.pageNumber}</p>
-                            <button
-                                className="p-2 rounded-md bg-white/10 hover:bg-white/20 text-xs flex items-center"
-                                onClick={() => handleGenerateAudio(page.id)}>
-                                {pageIdActive === page.id && (
-                                    <span className="block size-4 border-2 border-dashed rounded-full animate-spin mr-2"></span>
-                                )}
-                                Generate audio
-                            </button>
+                    <p className="mb-2">Page {page.pageNumber}</p>
+                    <div className="collapse bg-white/5 hover:bg-white/10 mb-3">
+                        <input type="checkbox" />
+                        <div className="collapse-title text-lg font-medium">Show / Content</div>
+                        <div className="collapse-content">
+                            <p>{page.content}</p>
                         </div>
+                    </div>
+                    <div className="flex gap-2 items-center">
+                        <button
+                            className="p-2 rounded-md bg-white/10 hover:bg-white/20 text-xs flex items-center"
+                            onClick={() => handleGenerateAudio(page.id)}>
+                            {pageIdActive === page.id && (
+                                <span className="block size-4 border-2 border-dashed rounded-full animate-spin mr-2"></span>
+                            )}
+                            Generate audio
+                        </button>
                         {page.audioFiles.map((audioFile) => (
                             <div key={audioFile.id} className="mt-4 flex-1">
                                 <audio

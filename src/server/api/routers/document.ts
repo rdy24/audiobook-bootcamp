@@ -122,21 +122,23 @@ export const documentRouter = createTRPCRouter({
       id: z.number(),
     }))
     .mutation(async ({ ctx, input }) => {
-
-      const document = await ctx.db.query.documents.findFirst({
-        where: (documents, { and,eq }) => and(
-          eq(documents.id, input.id),
-          eq(documents.createdById, ctx.session.user.id)
-        )
+      // Hapus semua audio files yang terkait dengan halaman dari dokumen
+      const pagesToDelete = await ctx.db.query.pages.findMany({
+        where: (pages, { eq }) => eq(pages.documentId, input.id),
       });
 
-      if (!document) {
-        throw new Error("Document not found");
+      if (pagesToDelete.length > 0) {
+        const pageIds = pagesToDelete.map((page) => page.id);
+        await ctx.db.delete(audioFiles).where(inArray(audioFiles.pageId, pageIds));
       }
 
+      // Hapus semua halaman yang terkait dengan dokumen
       await ctx.db.delete(pages).where(eq(pages.documentId, input.id));
 
-      const [deletedDoc] = await ctx.db.delete(documents).where(eq(documents.id, input.id)).returning();
+      // Hapus dokumen itu sendiri
+      const [deletedDoc] = await ctx.db.delete(documents)
+        .where(eq(documents.id, input.id))
+        .returning();
 
       if (!deletedDoc) {
         throw new Error("Failed to delete document");
