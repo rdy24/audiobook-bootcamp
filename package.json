@@ -25,7 +25,6 @@
     "@aws-sdk/lib-storage": "^3.717.0",
     "@heroicons/react": "^2.2.0",
     "@libsql/client": "0.14.0",
-    "@libsql/linux-x64-gnu": "^0.5.0-pre.5",
     "@llamaindex/cloud": "^2.0.20",
     "@t3-oss/env-nextjs": "^0.10.1",
     "@tanstack/react-query": "^5.50.0",
@@ -72,5 +71,8 @@
   "ct3aMetadata": {
     "initVersion": "7.38.1"
   },
-  "packageManager": "npm@10.8.2"
+  "packageManager": "npm@10.8.2",
+  "optionalDependencies": {
+    "@libsql/linux-x64-gnu": "^0.5.0-pre.5"
+  }
 }
